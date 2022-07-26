@@ -142,13 +142,7 @@ def run(
     # Run inference
     model.warmup(imgsz=(1 if pt else bs, 3, *imgsz))  # warmup
     dt, seen = [0.0, 0.0, 0.0], 0
-    since_overlap = 0
-    x_min = -100
-    y_min = -100
-    x_max = -100
-    y_max = -100
     for path, im, im0s, vid_cap, s in dataset:
-        since_overlap -= 1
         flag_overlap = False
         t1 = time_sync()
         im = torch.from_numpy(im).to(device)
@@ -165,23 +159,19 @@ def run(
         t3 = time_sync()
         dt[1] += t3 - t2
 
-        if since_overlap <= 0:
-            # Detect ArUco Marker here
-            corners, ids, rejected = cv2.aruco.detectMarkers(image=im0s, dictionary=aruco_dict, parameters=parameters)
-            if len(corners) != 0:
-                since_overlap = 5
-            color = (0, 0, 255)
-            x_coors = np.array([])
-            y_coors = np.array([])
-            for corner in corners:
-                x_coors = np.append(x_coors, corner.T[0])
-                y_coors = np.append(y_coors, corner.T[1])
-            if x_coors.any() or y_coors.any():
-                x_min = np.min(x_coors)
-                y_min = np.min(y_coors)
-                x_max = np.max(x_coors)
-                y_max = np.max(y_coors)
-        if len(corners) != 0:
+        # Detect ArUco Marker here
+        corners, ids, rejected = cv2.aruco.detectMarkers(image=im0s, dictionary=aruco_dict, parameters=parameters)
+        color = (0, 0, 255)
+        x_coors = np.array([])
+        y_coors = np.array([])
+        for corner in corners:
+            x_coors = np.append(x_coors, corner.T[0])
+            y_coors = np.append(y_coors, corner.T[1])
+        if x_coors.any() or y_coors.any():
+            x_min = np.min(x_coors)
+            y_min = np.min(y_coors)
+            x_max = np.max(x_coors)
+            y_max = np.max(y_coors)
             cv2.rectangle(im0s, (int(x_max), int(y_max)), (int(x_min), int(y_min)), color, 2)
             org = (int(x_min), int(y_min))
             draw_text(im0s, "Landing Pad", font=cv2.FONT_HERSHEY_SIMPLEX, font_scale=1, pos=org, text_color_bg=color,
@@ -238,10 +228,11 @@ def run(
                         save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
 
 
-                    if (x_min < xyxy[0] < x_max or x_min < xyxy[2] < x_max) and (y_min < xyxy[1] < y_max or y_min < xyxy[3] < y_max):
-                        flag_overlap = True
-                    if (xyxy[0] < x_min < xyxy[2] or xyxy[0] < x_max < xyxy[2]) and (xyxy[1] < y_min < xyxy[3] or xyxy[1] < y_max < xyxy[3]):
-                        flag_overlap = True
+                    if len(corners) != 0 and flag_overlap == False:
+                        if (x_min < xyxy[0] < x_max or x_min < xyxy[2] < x_max) and (y_min < xyxy[1] < y_max or y_min < xyxy[3] < y_max):
+                            flag_overlap = True
+                        if (xyxy[0] < x_min < xyxy[2] or xyxy[0] < x_max < xyxy[2]) and (xyxy[1] < y_min < xyxy[3] or xyxy[1] < y_max < xyxy[3]):
+                            flag_overlap = True
 
 
 
