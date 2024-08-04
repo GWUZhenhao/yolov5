@@ -27,7 +27,7 @@ def visdrone2yolo(dir):
 
 
 # Download
-dir = Path('./Visdrone')  # dataset root dir
+dir = Path(r"C:\Users\36394\Study\GWU\PHD in Biomedical Engineer\Research\UAS_vision\dataset")  # dataset root dir
 urls = ['https://github.com/ultralytics/yolov5/releases/download/v1.0/VisDrone2019-DET-train.zip',
         'https://github.com/ultralytics/yolov5/releases/download/v1.0/VisDrone2019-DET-val.zip',
         'https://github.com/ultralytics/yolov5/releases/download/v1.0/VisDrone2019-DET-test-dev.zip',
